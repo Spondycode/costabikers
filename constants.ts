@@ -6,6 +6,7 @@ export const MEMBERS: Member[] = [
     id: 'admin',
     name: 'Club Admin',
     password: 'admin123',
+    role: 'admin',
     avatarUrl: 'https://cdn-icons-png.flaticon.com/512/9703/9703596.png',
     bikeModel: 'Harley-Davidson CVO',
     bikeImageUrl: 'https://picsum.photos/seed/adminbike/400/300',

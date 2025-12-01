@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Member } from '../types';
-import { MapPin, User, Bike, ChevronLeft, Edit2, Save, X } from 'lucide-react';
+import { MapPin, User, Bike, ChevronLeft, Edit2, Save, X, Lock, Eye, EyeOff } from 'lucide-react';
 
 interface MembersProps {
   members: Member[];
@@ -155,6 +155,13 @@ const Members: React.FC<MembersProps> = ({ members, currentUser, onUpdateMember 
 // Internal Edit Form Component
 const EditProfileForm: React.FC<{ member: Member; onSave: (m: Member) => void; onCancel: () => void }> = ({ member, onSave, onCancel }) => {
     const [formData, setFormData] = useState<Member>(member);
+    const [showPasswordSection, setShowPasswordSection] = useState(false);
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [passwordError, setPasswordError] = useState('');
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -162,6 +169,31 @@ const EditProfileForm: React.FC<{ member: Member; onSave: (m: Member) => void; o
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        
+        // If password section is shown and fields are filled, validate password change
+        if (showPasswordSection && (currentPassword || newPassword || confirmPassword)) {
+            // Validate current password
+            if (currentPassword !== member.password) {
+                setPasswordError('Current password is incorrect');
+                return;
+            }
+            
+            // Validate new password
+            if (newPassword.length < 4) {
+                setPasswordError('New password must be at least 4 characters');
+                return;
+            }
+            
+            // Validate confirmation
+            if (newPassword !== confirmPassword) {
+                setPasswordError('New passwords do not match');
+                return;
+            }
+            
+            // Update password
+            formData.password = newPassword;
+        }
+        
         onSave(formData);
     };
 
@@ -229,6 +261,98 @@ const EditProfileForm: React.FC<{ member: Member; onSave: (m: Member) => void; o
                              <img src={formData.bikeImageUrl} alt="Preview" className="w-full h-full object-cover" />
                         </div>
                     </div>
+                </div>
+
+                {/* Password Change Section */}
+                <div className="mt-8 border-t border-gray-700 pt-6">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setShowPasswordSection(!showPasswordSection);
+                            setPasswordError('');
+                            setCurrentPassword('');
+                            setNewPassword('');
+                            setConfirmPassword('');
+                        }}
+                        className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-white transition-colors"
+                    >
+                        <Lock size={16} />
+                        {showPasswordSection ? 'Hide Password Change' : 'Change Password'}
+                    </button>
+
+                    {showPasswordSection && (
+                        <div className="mt-4 space-y-4 p-4 bg-gray-900/50 rounded-lg border border-gray-700">
+                            {passwordError && (
+                                <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-2 rounded-lg text-sm">
+                                    {passwordError}
+                                </div>
+                            )}
+                            
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Current Password</label>
+                                <div className="relative">
+                                    <input 
+                                        type={showCurrentPassword ? "text" : "password"}
+                                        value={currentPassword}
+                                        onChange={(e) => {
+                                            setCurrentPassword(e.target.value);
+                                            setPasswordError('');
+                                        }}
+                                        className="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 pr-10 text-white focus:border-bike-orange focus:outline-none"
+                                        placeholder="Enter current password"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                                    >
+                                        {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">New Password</label>
+                                <div className="relative">
+                                    <input 
+                                        type={showNewPassword ? "text" : "password"}
+                                        value={newPassword}
+                                        onChange={(e) => {
+                                            setNewPassword(e.target.value);
+                                            setPasswordError('');
+                                        }}
+                                        className="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 pr-10 text-white focus:border-bike-orange focus:outline-none"
+                                        placeholder="Enter new password"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowNewPassword(!showNewPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                                    >
+                                        {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Confirm New Password</label>
+                                <input 
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => {
+                                        setConfirmPassword(e.target.value);
+                                        setPasswordError('');
+                                    }}
+                                    className="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-white focus:border-bike-orange focus:outline-none"
+                                    placeholder="Confirm new password"
+                                />
+                            </div>
+
+                            <p className="text-xs text-gray-500">
+                                Password must be at least 4 characters long.
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 <div className="pt-6 flex gap-3">

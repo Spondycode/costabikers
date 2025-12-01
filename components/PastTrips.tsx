@@ -9,9 +9,10 @@ interface PastTripsProps {
   currentUser: Member;
   allMembers: Member[];
   onUpdateTrip: (trip: Trip) => void;
+  onDeleteTrip: (tripId: string) => void;
 }
 
-const PastTrips: React.FC<PastTripsProps> = ({ trips, currentUser, allMembers, onUpdateTrip }) => {
+const PastTrips: React.FC<PastTripsProps> = ({ trips, currentUser, allMembers, onUpdateTrip, onDeleteTrip }) => {
   const [editingTripId, setEditingTripId] = useState<string | null>(null);
   const [expandedChatTripId, setExpandedChatTripId] = useState<string | null>(null);
   
@@ -30,6 +31,15 @@ const PastTrips: React.FC<PastTripsProps> = ({ trips, currentUser, allMembers, o
       setEditingTripId(null);
   };
 
+  const isAdmin = currentUser.role === 'admin';
+
+  const handleDeleteTrip = (tripId: string) => {
+    if (confirm('Are you sure you want to delete this trip? This action cannot be undone.')) {
+      onDeleteTrip(tripId);
+      setEditingTripId(null);
+    }
+  };
+
   const getMember = (id: string) => {
       return allMembers.find(m => m.id === id) || { name: 'Unknown', avatarUrl: '', id: 'unknown', bikeModel: '', bikeImageUrl: '', address: '', lat: 0, lng: 0 };
   };
@@ -40,7 +50,13 @@ const PastTrips: React.FC<PastTripsProps> = ({ trips, currentUser, allMembers, o
           return (
               <div className="animate-in fade-in">
                   <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-4">Editing Archive</h2>
-                  <EditTripForm trip={tripToEdit} onSave={handleSaveEdit} onCancel={() => setEditingTripId(null)} />
+                  <EditTripForm 
+                    trip={tripToEdit} 
+                    currentUser={currentUser}
+                    onSave={handleSaveEdit} 
+                    onCancel={() => setEditingTripId(null)}
+                    onDelete={isAdmin ? () => handleDeleteTrip(tripToEdit.id) : undefined}
+                  />
               </div>
           )
       }

@@ -7,7 +7,8 @@ import PastTrips from './components/PastTrips';
 import Members from './components/Members';
 import Polls from './components/Polls';
 import Home from './components/Home';
-import { Navigation, Calendar, Users, BarChart2, LogOut, Bike, Home as HomeIcon } from 'lucide-react';
+import Admin from './components/Admin';
+import { Navigation, Calendar, Users, BarChart2, LogOut, Bike, Home as HomeIcon, Shield } from 'lucide-react';
 
 const App: React.FC = () => {
   // Initialize state from storage (database)
@@ -29,6 +30,12 @@ const App: React.FC = () => {
     }
   };
 
+  const handleDeleteTrip = (tripId: string) => {
+    const newTrips = trips.filter(t => t.id !== tripId);
+    setTrips(newTrips);
+    storage.saveTrips(newTrips);
+  };
+
   const handleUpdateTrip = (updatedTrip: Trip) => {
     // Check if we are updating an existing trip or adding a new one (if id doesn't exist)
     const exists = trips.some(t => t.id === updatedTrip.id);
@@ -46,6 +53,20 @@ const App: React.FC = () => {
     setPolls(updatedPolls);
     storage.savePolls(updatedPolls); // Persist to DB
   };
+
+  const handleAddMember = (newMember: Member) => {
+    const newMembers = [...members, newMember];
+    setMembers(newMembers);
+    storage.saveMembers(newMembers);
+  };
+
+  const handleDeleteMember = (memberId: string) => {
+    const newMembers = members.filter(m => m.id !== memberId);
+    setMembers(newMembers);
+    storage.saveMembers(newMembers);
+  };
+
+  const isAdmin = user?.role === 'admin';
 
   if (!user) {
     return <Login onLogin={setUser} members={members} />;
@@ -100,6 +121,7 @@ const App: React.FC = () => {
             currentUser={user} 
             allMembers={members} 
             onUpdateTrip={handleUpdateTrip}
+            onDeleteTrip={handleDeleteTrip}
             onTripCompleted={() => setActiveTab('past-trips')}
           />
         )}
@@ -109,6 +131,7 @@ const App: React.FC = () => {
             currentUser={user}
             allMembers={members}
             onUpdateTrip={handleUpdateTrip}
+            onDeleteTrip={handleDeleteTrip}
           />
         )}
         {activeTab === 'members' && (
@@ -123,6 +146,15 @@ const App: React.FC = () => {
             polls={polls} 
             onUpdatePolls={handleUpdatePolls}
             currentUser={user} 
+          />
+        )}
+        {activeTab === 'admin' && isAdmin && (
+          <Admin 
+            members={members}
+            currentUser={user}
+            onUpdateMember={handleUpdateMember}
+            onAddMember={handleAddMember}
+            onDeleteMember={handleDeleteMember}
           />
         )}
       </main>
@@ -154,6 +186,14 @@ const App: React.FC = () => {
             icon={<Users size={24} />} 
             label="Members" 
           />
+          {isAdmin && (
+            <NavButton 
+              active={activeTab === 'admin'} 
+              onClick={() => setActiveTab('admin')} 
+              icon={<Shield size={24} />} 
+              label="Admin" 
+            />
+          )}
           <NavButton 
             active={activeTab === 'past-trips'} 
             onClick={() => setActiveTab('past-trips')} 

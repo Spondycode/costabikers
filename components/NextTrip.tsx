@@ -1,17 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Trip, Member, Comment } from '../types';
 import { getRouteAIAnalysis, getChatAssistantReply } from '../services/geminiService';
-import { MapPin, Calendar, Navigation, Send, Camera, Bot, Edit2, Save, X, Clock, RefreshCw, CheckCircle, PlusCircle, Link as LinkIcon, Users, UserPlus, UserMinus } from 'lucide-react';
+import { MapPin, Calendar, Navigation, Send, Camera, Bot, Edit2, Save, X, Clock, RefreshCw, CheckCircle, PlusCircle, Link as LinkIcon, Users, UserPlus, UserMinus, Trash2 } from 'lucide-react';
 
 interface NextTripProps {
   trip?: Trip; // Can be undefined if no upcoming trip
   currentUser: Member;
   allMembers: Member[];
   onUpdateTrip: (trip: Trip) => void;
+  onDeleteTrip: (tripId: string) => void;
   onTripCompleted?: () => void;
 }
 
-const NextTrip: React.FC<NextTripProps> = ({ trip, currentUser, allMembers, onUpdateTrip, onTripCompleted }) => {
+const NextTrip: React.FC<NextTripProps> = ({ trip, currentUser, allMembers, onUpdateTrip, onDeleteTrip, onTripCompleted }) => {
   const [loadingAi, setLoadingAi] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -135,8 +136,12 @@ const NextTrip: React.FC<NextTripProps> = ({ trip, currentUser, allMembers, onUp
       if (confirm("Are you sure you want to mark this ride as completed? It will be moved to the Archive.")) {
           // 1. Update status to past
           onUpdateTrip({ ...trip, status: 'past' });
-          // 2. Close edit mode (the parent will likely unmount this component or render the 'empty' state)
+          // 2. Close edit mode
           setIsEditing(false);
+          // 3. Navigate to archive page
+          if (onTripCompleted) {
+            onTripCompleted();
+          }
       }
   };
 
@@ -152,13 +157,23 @@ const NextTrip: React.FC<NextTripProps> = ({ trip, currentUser, allMembers, onUp
       onUpdateTrip({ ...trip, participants: newParticipants });
   };
 
+  const isAdmin = currentUser.role === 'admin';
+
+  const handleDeleteTrip = () => {
+    if (confirm('Are you sure you want to delete this trip? This action cannot be undone.')) {
+      onDeleteTrip(trip.id);
+    }
+  };
+
   if (isEditing) {
     return (
         <EditTripForm 
             trip={trip} 
+            currentUser={currentUser}
             onSave={handleSaveTrip} 
             onCancel={() => setIsEditing(false)} 
             onComplete={handleCompleteTrip}
+            onDelete={isAdmin ? handleDeleteTrip : undefined}
         />
     );
   }
@@ -296,11 +311,13 @@ const NextTrip: React.FC<NextTripProps> = ({ trip, currentUser, allMembers, onUp
 
 // Internal Edit Form Component for Trip
 export const EditTripForm: React.FC<{ 
-    trip: Trip; 
+    trip: Trip;
+    currentUser: Member;
     onSave: (t: Trip) => void; 
     onCancel: () => void;
     onComplete?: () => void;
-}> = ({ trip, onSave, onCancel, onComplete }) => {
+    onDelete?: () => void;
+}> = ({ trip, currentUser, onSave, onCancel, onComplete, onDelete }) => {
     const [formData, setFormData] = useState<Trip>(trip);
     const [isRegenerating, setIsRegenerating] = useState(false);
     
@@ -493,6 +510,22 @@ export const EditTripForm: React.FC<{
                         </button>
                          <p className="text-center text-gray-500 text-xs mt-2">
                             This will move the current ride to the archive folder.
+                        </p>
+                    </div>
+                )}
+
+                {onDelete && (
+                    <div className="mt-8 border-t border-gray-700 pt-6">
+                        <button
+                            type="button"
+                            onClick={onDelete}
+                            className="w-full py-4 bg-red-600/10 text-red-500 border border-red-500/50 hover:bg-red-600 hover:text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 group"
+                        >
+                            <Trash2 className="group-hover:scale-110 transition-transform" size={20} /> 
+                            Delete Trip Permanently
+                        </button>
+                         <p className="text-center text-gray-500 text-xs mt-2">
+                            This action cannot be undone. The trip and all its data will be permanently deleted.
                         </p>
                     </div>
                 )}

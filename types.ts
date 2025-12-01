@@ -3,6 +3,7 @@ export interface Member {
   id: string;
   name: string;
   password?: string; // Added password field (optional for backwards compatibility with old data)
+  role?: 'admin' | 'member'; // Role field (optional for backwards compatibility)
   avatarUrl: string;
   bikeModel: string;
   bikeImageUrl: string;
@@ -54,4 +55,4 @@ export interface Poll {
   active: boolean;
 }
 
-export type TabView = 'home' | 'next-trip' | 'past-trips' | 'members' | 'polls';
+export type TabView = 'home' | 'next-trip' | 'past-trips' | 'members' | 'polls' | 'admin';
