@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Member } from '../types';
 import { MapPin, User, Bike, ChevronLeft, Edit2, Save, X, Lock, Eye, EyeOff } from 'lucide-react';
+import { ImageUpload } from './ImageUpload';
 
 interface MembersProps {
   members: Member[];
@@ -236,29 +237,59 @@ const EditProfileForm: React.FC<{ member: Member; onSave: (m: Member) => void; o
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Avatar URL</label>
-                        <input 
-                            type="text" 
-                            name="avatarUrl" 
-                            value={formData.avatarUrl} 
-                            onChange={handleChange}
-                            className="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-gray-300 text-sm focus:border-bike-orange focus:outline-none"
-                        />
-                        <div className="mt-2 h-10 w-10 rounded-full overflow-hidden border border-gray-700">
-                             <img src={formData.avatarUrl} alt="Preview" className="w-full h-full object-cover" />
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Avatar</label>
+                        <div className="space-y-3">
+                            <ImageUpload
+                                onImageUploaded={(url) => setFormData({ ...formData, avatarUrl: url })}
+                                buttonText="Upload Avatar"
+                                showPreview={false}
+                            />
+                            <div className="flex items-center gap-3">
+                                <div className="h-16 w-16 rounded-full overflow-hidden border-2 border-gray-700 bg-gray-900">
+                                    {formData.avatarUrl && (
+                                        <img src={formData.avatarUrl} alt="Avatar preview" className="w-full h-full object-cover" />
+                                    )}
+                                </div>
+                                <div className="flex-1">
+                                    <label className="block text-xs text-gray-600 mb-1">Or paste URL:</label>
+                                    <input 
+                                        type="text" 
+                                        name="avatarUrl" 
+                                        value={formData.avatarUrl} 
+                                        onChange={handleChange}
+                                        className="w-full bg-gray-900 border border-gray-600 rounded-lg p-2 text-gray-300 text-sm focus:border-bike-orange focus:outline-none"
+                                        placeholder="https://..."
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Bike Photo URL</label>
-                        <input 
-                            type="text" 
-                            name="bikeImageUrl" 
-                            value={formData.bikeImageUrl} 
-                            onChange={handleChange}
-                            className="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-gray-300 text-sm focus:border-bike-orange focus:outline-none"
-                        />
-                        <div className="mt-2 h-16 w-full rounded overflow-hidden border border-gray-700">
-                             <img src={formData.bikeImageUrl} alt="Preview" className="w-full h-full object-cover" />
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Bike Photo</label>
+                        <div className="space-y-3">
+                            <ImageUpload
+                                onImageUploaded={(url) => setFormData({ ...formData, bikeImageUrl: url })}
+                                buttonText="Upload Bike Photo"
+                                showPreview={false}
+                            />
+                            <div className="flex items-center gap-3">
+                                <div className="h-16 w-24 rounded overflow-hidden border-2 border-gray-700 bg-gray-900">
+                                    {formData.bikeImageUrl && (
+                                        <img src={formData.bikeImageUrl} alt="Bike preview" className="w-full h-full object-cover" />
+                                    )}
+                                </div>
+                                <div className="flex-1">
+                                    <label className="block text-xs text-gray-600 mb-1">Or paste URL:</label>
+                                    <input 
+                                        type="text" 
+                                        name="bikeImageUrl" 
+                                        value={formData.bikeImageUrl} 
+                                        onChange={handleChange}
+                                        className="w-full bg-gray-900 border border-gray-600 rounded-lg p-2 text-gray-300 text-sm focus:border-bike-orange focus:outline-none"
+                                        placeholder="https://..."
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

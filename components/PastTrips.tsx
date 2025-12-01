@@ -1,8 +1,9 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Trip, Member, Comment } from '../types';
-import { ExternalLink, Map, Image as ImageIcon, MapPin, Camera, Edit2, MessageSquare, Send, Users } from 'lucide-react';
+import { ExternalLink, Map, Image as ImageIcon, MapPin, Camera, Edit2, MessageSquare, Send, Users, Upload, X } from 'lucide-react';
 import { EditTripForm } from './NextTrip';
+import { uploadImage } from '../services/imageUploadService';
 
 interface PastTripsProps {
   trips: Trip[];
@@ -16,14 +17,42 @@ const PastTrips: React.FC<PastTripsProps> = ({ trips, currentUser, allMembers, o
   const [editingTripId, setEditingTripId] = useState<string | null>(null);
   const [expandedChatTripId, setExpandedChatTripId] = useState<string | null>(null);
   
-  // Mock image upload function to demonstrate persistence
-  const handleAddPhoto = (trip: Trip) => {
-    const mockNewImage = `https://picsum.photos/seed/${Date.now()}/400/300`;
-    const updatedGallery = [...(trip.gallery || []), mockNewImage];
-    onUpdateTrip({
+  const [uploadingTripId, setUploadingTripId] = useState<string | null>(null);
+  const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
+  const [hoveredImage, setHoveredImage] = useState<string | null>(null);
+
+  const handleAddPhoto = async (trip: Trip, event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploadingTripId(trip.id);
+    const result = await uploadImage(file);
+    setUploadingTripId(null);
+
+    if (result.success && result.url) {
+      const updatedGallery = [...(trip.gallery || []), result.url];
+      onUpdateTrip({
         ...trip,
         gallery: updatedGallery
-    });
+      });
+    } else {
+      alert(`Upload failed: ${result.error}`);
+    }
+
+    // Reset input
+    if (event.target) {
+      event.target.value = '';
+    }
+  };
+
+  const handleDeletePhoto = (trip: Trip, imageUrl: string) => {
+    if (confirm('Delete this photo from the gallery?')) {
+      const updatedGallery = (trip.gallery || []).filter(img => img !== imageUrl);
+      onUpdateTrip({
+        ...trip,
+        gallery: updatedGallery
+      });
+    }
   };
 
   const handleSaveEdit = (updatedTrip: Trip) => {
@@ -48,7 +77,7 @@ const PastTrips: React.FC<PastTripsProps> = ({ trips, currentUser, allMembers, o
       const tripToEdit = trips.find(t => t.id === editingTripId);
       if (tripToEdit) {
           return (
-              <div className="animate-in fade-in">
+              <div className="animate-in fade-in pb-20">
                   <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-4">Editing Archive</h2>
                   <EditTripForm 
                     trip={tripToEdit} 
@@ -143,19 +172,48 @@ const PastTrips: React.FC<PastTripsProps> = ({ trips, currentUser, allMembers, o
                 <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Memories</h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {trip.gallery && trip.gallery.map((img, i) => (
-                    <div key={i} className="aspect-square rounded-lg overflow-hidden bg-gray-900 relative group">
+                    <div 
+                        key={i} 
+                        className="aspect-square rounded-lg overflow-hidden bg-gray-900 relative group"
+                        onMouseEnter={() => setHoveredImage(`${trip.id}-${i}`)}
+                        onMouseLeave={() => setHoveredImage(null)}
+                    >
                         <img src={img} alt="Trip memory" className="w-full h-full object-cover hover:scale-110 transition-transform duration-500 cursor-pointer" />
+                        {isAdmin && hoveredImage === `${trip.id}-${i}` && (
+                            <button
+                                onClick={() => handleDeletePhoto(trip, img)}
+                                className="absolute top-2 right-2 p-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full transition-colors z-10 shadow-lg"
+                                title="Delete photo"
+                            >
+                                <X size={14} />
+                            </button>
+                        )}
                     </div>
                 ))}
                 {/* Upload Placeholder */}
-                    <div 
-                        onClick={() => handleAddPhoto(trip)}
+                    <label 
                         className="aspect-square rounded-lg border-2 border-dashed border-gray-600 flex flex-col items-center justify-center text-gray-500 hover:text-bike-orange hover:border-bike-orange transition-colors cursor-pointer bg-gray-900/50"
                         title="Upload Photo"
                     >
-                    <Camera size={20} />
-                    <span className="text-[10px] mt-1 font-medium">Add Photo</span>
-                    </div>
+                        <input 
+                            ref={el => fileInputRefs.current[trip.id] = el}
+                            type="file" 
+                            accept="image/*" 
+                            onChange={(e) => handleAddPhoto(trip, e)}
+                            className="hidden"
+                        />
+                        {uploadingTripId === trip.id ? (
+                            <>
+                                <Upload size={20} className="animate-pulse" />
+                                <span className="text-[10px] mt-1 font-medium">Uploading...</span>
+                            </>
+                        ) : (
+                            <>
+                                <Camera size={20} />
+                                <span className="text-[10px] mt-1 font-medium">Add Photo</span>
+                            </>
+                        )}
+                    </label>
                 </div>
               </div>
 

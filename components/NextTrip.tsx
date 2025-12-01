@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Trip, Member, Comment } from '../types';
 import { getRouteAIAnalysis, getChatAssistantReply } from '../services/geminiService';
 import { MapPin, Calendar, Navigation, Send, Camera, Bot, Edit2, Save, X, Clock, RefreshCw, CheckCircle, PlusCircle, Link as LinkIcon, Users, UserPlus, UserMinus, Trash2 } from 'lucide-react';
+import { ImageUpload } from './ImageUpload';
 
 interface NextTripProps {
   trip?: Trip; // Can be undefined if no upcoming trip
@@ -351,8 +352,8 @@ export const EditTripForm: React.FC<{
     };
 
     return (
-        <div className="bg-gray-800 rounded-xl border border-gray-700 shadow-xl p-6 animate-in fade-in slide-in-from-bottom-4">
-            <div className="flex items-center justify-between mb-6">
+        <div className="bg-gray-800 rounded-xl border border-gray-700 shadow-xl overflow-hidden animate-in fade-in slide-in-from-bottom-4">
+            <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-700 sticky top-0 bg-gray-800 z-10">
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                     <Edit2 className="text-bike-orange" /> Edit Ride Details
                 </h2>
@@ -361,7 +362,7 @@ export const EditTripForm: React.FC<{
                 </button>
             </div>
             
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="max-h-[calc(100vh-280px)] overflow-y-auto p-6 pt-4 pb-24 space-y-4 scrollbar-hide">
                 <div>
                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Ride Title</label>
                     <input 
@@ -488,14 +489,32 @@ export const EditTripForm: React.FC<{
                 </div>
 
                 <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Cover Image URL</label>
-                    <input 
-                        type="text" 
-                        name="coverImage" 
-                        value={formData.coverImage} 
-                        onChange={handleChange}
-                        className="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-gray-400 text-sm focus:border-bike-orange focus:outline-none"
-                    />
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Cover Image</label>
+                    <div className="space-y-3">
+                        <ImageUpload
+                            onImageUploaded={(url) => setFormData({ ...formData, coverImage: url })}
+                            buttonText="Upload Cover Image"
+                            showPreview={false}
+                        />
+                        <div className="flex items-start gap-3">
+                            <div className="h-24 w-40 rounded overflow-hidden border-2 border-gray-700 bg-gray-900 shrink-0">
+                                {formData.coverImage && (
+                                    <img src={formData.coverImage} alt="Cover preview" className="w-full h-full object-cover" />
+                                )}
+                            </div>
+                            <div className="flex-1">
+                                <label className="block text-xs text-gray-600 mb-1">Or paste URL:</label>
+                                <input 
+                                    type="text" 
+                                    name="coverImage" 
+                                    value={formData.coverImage} 
+                                    onChange={handleChange}
+                                    className="w-full bg-gray-900 border border-gray-600 rounded-lg p-2 text-gray-400 text-sm focus:border-bike-orange focus:outline-none"
+                                    placeholder="https://..."
+                                />
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
                 {onComplete && (
