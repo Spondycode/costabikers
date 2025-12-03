@@ -11,8 +11,13 @@ const STORAGE_KEYS = {
 
 const CURRENT_VERSION = '1.1.0'; // Increment this when you want to reset data
 
-// Check version and clear storage if needed
+// Check version and clear storage if needed (only in production)
 const checkVersion = () => {
+  // Skip version check in development mode
+  if (import.meta.env.DEV) {
+    return;
+  }
+  
   try {
     const storedVersion = localStorage.getItem(STORAGE_KEYS.VERSION);
     if (storedVersion !== CURRENT_VERSION) {
