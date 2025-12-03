@@ -12,9 +12,10 @@ const STORAGE_KEYS = {
 const CURRENT_VERSION = '1.1.0'; // Increment this when you want to reset data
 
 // Check version and clear storage if needed (only in production)
-const checkVersion = () => {
+// Exported for testing purposes
+export const checkVersion = (isDev: boolean = import.meta.env.DEV) => {
   // Skip version check in development mode
-  if (import.meta.env.DEV) {
+  if (isDev) {
     return;
   }
   
