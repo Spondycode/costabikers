@@ -6,10 +6,28 @@ const STORAGE_KEYS = {
   MEMBERS: 'cbb_members',
   TRIPS: 'cbb_trips',
   POLLS: 'cbb_polls',
+  VERSION: 'cbb_version',
+};
+
+const CURRENT_VERSION = '1.1.0'; // Increment this when you want to reset data
+
+// Check version and clear storage if needed
+const checkVersion = () => {
+  try {
+    const storedVersion = localStorage.getItem(STORAGE_KEYS.VERSION);
+    if (storedVersion !== CURRENT_VERSION) {
+      console.log('Version mismatch, resetting storage...');
+      localStorage.clear();
+      localStorage.setItem(STORAGE_KEYS.VERSION, CURRENT_VERSION);
+    }
+  } catch (e) {
+    console.error('Failed to check version', e);
+  }
 };
 
 export const storage = {
   getMembers: (): Member[] => {
+    checkVersion();
     try {
       const data = localStorage.getItem(STORAGE_KEYS.MEMBERS);
       let members = data ? JSON.parse(data) : MEMBERS;
