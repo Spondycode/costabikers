@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Trip, Member, Comment } from '../types';
 import { getRouteAIAnalysis, getChatAssistantReply } from '../services/geminiService';
-import { MapPin, Calendar, Navigation, Send, Camera, Bot, Edit2, Save, X, Clock, RefreshCw, CheckCircle, PlusCircle, Link as LinkIcon, Users, UserPlus, UserMinus, Trash2 } from 'lucide-react';
+import { MapPin, Calendar, Navigation, Send, Camera, Bot, Edit2, Save, X, Clock, RefreshCw, CheckCircle, PlusCircle, Link as LinkIcon, Users, UserPlus, UserMinus, Trash2, Upload, FileText, Download } from 'lucide-react';
 import { ImageUpload } from './ImageUpload';
 
 interface NextTripProps {
@@ -166,6 +166,18 @@ const NextTrip: React.FC<NextTripProps> = ({ trip, currentUser, allMembers, onUp
     }
   };
 
+  const handleDownloadGpx = () => {
+    if (!trip.gpxFile || !trip.gpxFileName) return;
+    
+    // Create a download link
+    const link = document.createElement('a');
+    link.href = trip.gpxFile;
+    link.download = trip.gpxFileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (isEditing) {
     return (
         <EditTripForm 
@@ -210,6 +222,30 @@ const NextTrip: React.FC<NextTripProps> = ({ trip, currentUser, allMembers, onUp
           </div>
         </div>
       </div>
+
+      {/* GPX Download Button */}
+      {trip.gpxFile && trip.gpxFileName && (
+        <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-lg">
+          <button
+            onClick={handleDownloadGpx}
+            className="w-full flex items-center justify-between p-4 bg-gray-900 hover:bg-gray-700 rounded-lg transition-all group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-bike-orange/10 rounded-lg group-hover:bg-bike-orange/20 transition-colors">
+                <FileText size={24} className="text-bike-orange" />
+              </div>
+              <div className="text-left">
+                <p className="text-white font-bold text-sm">{trip.gpxFileName}</p>
+                <p className="text-gray-400 text-xs">Route GPX File</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-bike-orange group-hover:text-white transition-colors">
+              <span className="text-sm font-bold">Download</span>
+              <Download size={20} />
+            </div>
+          </button>
+        </div>
+      )}
 
       {/* Muster Station / Participants */}
       <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg">
@@ -321,6 +357,7 @@ export const EditTripForm: React.FC<{
 }> = ({ trip, currentUser, onSave, onCancel, onComplete, onDelete }) => {
     const [formData, setFormData] = useState<Trip>(trip);
     const [isRegenerating, setIsRegenerating] = useState(false);
+    const [uploadingGpx, setUploadingGpx] = useState(false);
     
     // Manage links state separately to make binding inputs easier
     const [reliveUrl, setReliveUrl] = useState(trip.externalLinks?.find(l => l.platform === 'Relive')?.url || '');
@@ -335,6 +372,48 @@ export const EditTripForm: React.FC<{
         const text = await getRouteAIAnalysis(formData.title, formData.startLocation, formData.endLocation, formData.distanceKm);
         setFormData(prev => ({ ...prev, aiBriefing: text }));
         setIsRegenerating(false);
+    };
+
+    const handleGpxUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        
+        if (!file.name.toLowerCase().endsWith('.gpx')) {
+            alert('Please upload a .gpx file');
+            return;
+        }
+        
+        setUploadingGpx(true);
+        
+        try {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const dataUrl = event.target?.result as string;
+                setFormData(prev => ({ 
+                    ...prev, 
+                    gpxFile: dataUrl,
+                    gpxFileName: file.name 
+                }));
+                setUploadingGpx(false);
+            };
+            reader.onerror = () => {
+                alert('Failed to read GPX file');
+                setUploadingGpx(false);
+            };
+            reader.readAsDataURL(file);
+        } catch (error) {
+            console.error('Error uploading GPX:', error);
+            alert('Failed to upload GPX file');
+            setUploadingGpx(false);
+        }
+    };
+
+    const handleRemoveGpx = () => {
+        setFormData(prev => ({ 
+            ...prev, 
+            gpxFile: undefined,
+            gpxFileName: undefined 
+        }));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -514,6 +593,49 @@ export const EditTripForm: React.FC<{
                                 />
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                {/* GPX File Upload */}
+                <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Route GPX File</label>
+                    <div className="space-y-3">
+                        {!formData.gpxFile ? (
+                            <label className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-900 border-2 border-dashed border-gray-600 rounded-lg hover:border-bike-orange hover:bg-gray-800 transition-all cursor-pointer group">
+                                <Upload size={18} className="text-gray-500 group-hover:text-bike-orange" />
+                                <span className="text-sm font-medium text-gray-400 group-hover:text-white">
+                                    {uploadingGpx ? 'Uploading...' : 'Upload GPX File'}
+                                </span>
+                                <input 
+                                    type="file" 
+                                    accept=".gpx"
+                                    onChange={handleGpxUpload}
+                                    disabled={uploadingGpx}
+                                    className="hidden"
+                                />
+                            </label>
+                        ) : (
+                            <div className="flex items-center justify-between bg-gray-900 border border-gray-600 rounded-lg p-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-bike-orange/10 rounded-lg">
+                                        <FileText size={20} className="text-bike-orange" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-white">{formData.gpxFileName}</p>
+                                        <p className="text-xs text-gray-500">GPX route file attached</p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleRemoveGpx}
+                                    className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                                    title="Remove GPX file"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+                        )}
+                        <p className="text-xs text-gray-500">Upload a .gpx file with the route coordinates</p>
                     </div>
                 </div>
                 

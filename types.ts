@@ -32,6 +32,8 @@ export interface Trip {
   endLocation: string;
   coverImage: string;
   routeMapUrl?: string;
+  gpxFile?: string; // GPX file data URL
+  gpxFileName?: string; // Original filename
   externalLinks?: {
     platform: 'Relive' | 'Calimoto' | 'Strava' | 'Google Maps';
     url: string;
